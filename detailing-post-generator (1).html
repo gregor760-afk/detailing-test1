@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generator Postów — Szkolenia Detailingowe</title>
+<style>
+  :root {
+    --bg: #0d0d0f;
+    --bg2: #141416;
+    --bg3: #1c1c1f;
+    --bg4: #242428;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --gold: #c9a227;
+    --gold2: #e8be4a;
+    --gold-dim: rgba(201,162,39,0.15);
+    --gold-dim2: rgba(201,162,39,0.25);
+    --text: #f0ede8;
+    --text2: #9a9791;
+    --text3: #5c5a56;
+    --green: #2d7a4f;
+    --green-bg: rgba(45,122,79,0.15);
+    --green-text: #5ec98a;
+    --red: #c0392b;
+    --red-bg: rgba(192,57,43,0.15);
+    --red-text: #f07060;
+    --radius: 10px;
+    --radius-sm: 6px;
+    --radius-lg: 14px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 15px; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* LAYOUT */
+  .app { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 300px; flex-shrink: 0;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    position: sticky; top: 0; height: 100vh;
+    overflow-y: auto;
+  }
+  .main { flex: 1; padding: 2rem; max-width: 820px; margin: 0 auto; width: 100%; }
+
+  /* SIDEBAR HEADER */
+  .sidebar-logo {
+    padding: 1.5rem 1.25rem 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--gold-dim); border: 1px solid rgba(201,162,39,0.3);
+    border-radius: 20px; padding: 3px 10px;
+    font-size: 11px; color: var(--gold2); font-weight: 600;
+    letter-spacing: 0.04em; margin-bottom: 8px;
+  }
+  .sidebar-logo h1 {
+    font-size: 15px; font-weight: 600; color: var(--text);
+    line-height: 1.3; margin-bottom: 4px;
+  }
+  .sidebar-logo p { font-size: 11px; color: var(--text3); }
+
+  /* SIDEBAR SECTION */
+  .sidebar-section { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); }
+  .section-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+    color: var(--text3); text-transform: uppercase; margin-bottom: 10px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .section-label svg { opacity: 0.5; }
+
+  /* CHIP BUTTONS */
+  .chips { display: flex; flex-direction: column; gap: 5px; }
+  .chip {
+    padding: 7px 11px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border2);
+    background: transparent; color: var(--text2);
+    font-size: 12px; cursor: pointer; text-align: left;
+    transition: all 0.15s; display: flex; align-items: flex-start;
+    gap: 8px; line-height: 1.35;
+  }
+  .chip:hover { border-color: rgba(201,162,39,0.3); color: var(--text); }
+  .chip.active {
+    border-color: var(--gold); background: var(--gold-dim);
+    color: var(--gold2); font-weight: 500;
+  }
+  .chip-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+  .chip-body { display: flex; flex-direction: column; gap: 1px; }
+  .chip-title { font-size: 12px; font-weight: 500; }
+  .chip-desc { font-size: 10px; opacity: 0.7; }
+
+  /* TRAININGS PANEL */
+  .training-add {
+    display: flex; gap: 6px; margin-bottom: 10px;
+  }
+  .training-add input {
+    flex: 1; background: var(--bg3); border: 1px solid var(--border2);
+    border-radius: var(--radius-sm); padding: 6px 10px;
+    color: var(--text); font-size: 12px; outline: none;
+  }
+  .training-add input:focus { border-color: var(--gold); }
+  .training-add input::placeholder { color: var(--text3); }
+  .btn-add {
+    background: var(--gold-dim); border: 1px solid rgba(201,162,39,0.35);
+    color: var(--gold2); border-radius: var(--radius-sm);
+    padding: 6px 10px; font-size: 13px; cursor: pointer;
+    transition: all 0.15s; flex-shrink: 0;
+  }
+  .btn-add:hover { background: var(--gold-dim2); }
+
+  .training-list { display: flex; flex-direction: column; gap: 4px; }
+  .training-item {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 8px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--bg3); cursor: pointer;
+    transition: all 0.15s;
+  }
+  .training-item:hover { border-color: var(--border2); }
+  .training-item.selected { border-color: var(--gold); background: var(--gold-dim); }
+  .training-item.inactive { opacity: 0.4; }
+  .training-check {
+    width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0;
+    border: 1px solid var(--border2); display: flex;
+    align-items: center; justify-content: center; font-size: 9px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .training-check.on { background: var(--green); border-color: var(--green); color: #fff; }
+  .training-name {
+    flex: 1; font-size: 11px; color: var(--text2); line-height: 1.35;
+    min-width: 0; overflow: hidden;
+  }
+  .training-item.selected .training-name { color: var(--gold2); }
+  .training-actions { display: flex; gap: 2px; flex-shrink: 0; }
+  .btn-icon {
+    background: transparent; border: none; padding: 3px;
+    color: var(--text3); cursor: pointer; font-size: 12px;
+    border-radius: 3px; transition: all 0.15s;
+  }
+  .btn-icon:hover { color: var(--text); background: var(--bg4); }
+  .btn-icon.danger:hover { color: var(--red-text); }
+
+  /* TOGGLE SWITCH */
+  .toggle-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 5px 0;
+  }
+  .toggle-label { font-size: 12px; color: var(--text2); }
+  .toggle {
+    width: 32px; height: 18px; border-radius: 9px;
+    background: var(--bg4); border: 1px solid var(--border2);
+    cursor: pointer; position: relative; transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle.on { background: var(--green); border-color: var(--green); }
+  .toggle-thumb {
+    position: absolute; top: 2px; left: 2px;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: var(--text3); transition: all 0.2s;
+  }
+  .toggle.on .toggle-thumb { left: 16px; background: #fff; }
+
+  /* MAIN AREA */
+  .page-header { margin-bottom: 2rem; }
+  .page-header h2 { font-size: 22px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .page-header p { font-size: 13px; color: var(--text2); }
+
+  /* MATRIX GRID */
+  .matrix-section {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .matrix-title {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--text3);
+    margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+  }
+  .pill-grid { display: flex; flex-wrap: wrap; gap: 7px; }
+  .pill {
+    padding: 7px 14px; border-radius: 20px;
+    border: 1px solid var(--border2);
+    background: transparent; color: var(--text2);
+    font-size: 12px; cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .pill:hover { border-color: rgba(201,162,39,0.3); color: var(--text); }
+  .pill.active {
+    border-color: var(--gold); background: var(--gold-dim);
+    color: var(--gold2); font-weight: 500;
+  }
+  .pill-platform-ig.active { border-color: #e1306c; background: rgba(225,48,108,0.12); color: #f06292; }
+  .pill-platform-fb.active { border-color: #1877f2; background: rgba(24,119,242,0.12); color: #64b5f6; }
+
+  .type-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+  .type-card {
+    padding: 10px; border-radius: var(--radius);
+    border: 1px solid var(--border); background: var(--bg3);
+    cursor: pointer; transition: all 0.15s; text-align: left;
+  }
+  .type-card:hover { border-color: var(--border2); }
+  .type-card.active { border-color: var(--gold); background: var(--gold-dim); }
+  .type-card-icon { font-size: 18px; margin-bottom: 5px; }
+  .type-card-name { font-size: 12px; font-weight: 500; color: var(--text); margin-bottom: 2px; }
+  .type-card.active .type-card-name { color: var(--gold2); }
+  .type-card-desc { font-size: 10px; color: var(--text3); line-height: 1.3; }
+  .type-card.active .type-card-desc { color: rgba(201,162,39,0.6); }
+
+  /* CONTEXT BOX */
+  .context-area {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .context-area textarea {
+    width: 100%; background: var(--bg3); border: 1px solid var(--border2);
+    border-radius: var(--radius); padding: 12px; color: var(--text);
+    font-size: 13px; line-height: 1.6; resize: vertical;
+    outline: none; font-family: inherit; margin-top: 12px;
+  }
+  .context-area textarea:focus { border-color: var(--gold); }
+  .context-area textarea::placeholder { color: var(--text3); }
+  .context-hint { font-size: 11px; color: var(--text3); margin-top: 8px; line-height: 1.5; }
+
+  /* GENERATE BUTTON */
+  .btn-generate {
+    width: 100%; padding: 16px;
+    background: linear-gradient(135deg, var(--gold) 0%, #e8be4a 100%);
+    border: none; border-radius: var(--radius-lg);
+    color: #0d0d0f; font-size: 15px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    letter-spacing: 0.02em; margin-bottom: 1.25rem;
+  }
+  .btn-generate:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(201,162,39,0.3); }
+  .btn-generate:active { transform: translateY(0); }
+  .btn-generate:disabled {
+    background: var(--bg4); color: var(--text3);
+    cursor: not-allowed; transform: none; box-shadow: none;
+  }
+  .spinner { display: inline-block; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* OUTPUT */
+  .output-box {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); overflow: hidden;
+    margin-bottom: 1rem; display: none;
+  }
+  .output-box.visible { display: block; }
+  .output-header {
+    padding: 12px 16px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .output-meta { display: flex; align-items: center; gap: 8px; }
+  .output-badge {
+    font-size: 11px; padding: 3px 9px; border-radius: 12px;
+    font-weight: 500;
+  }
+  .badge-platform-ig { background: rgba(225,48,108,0.15); color: #f06292; }
+  .badge-platform-fb { background: rgba(24,119,242,0.15); color: #64b5f6; }
+  .badge-chars { background: var(--bg4); color: var(--text2); font-size: 11px; padding: 3px 8px; border-radius: 10px; }
+  .btn-copy {
+    padding: 6px 14px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border2); background: var(--bg3);
+    color: var(--text2); font-size: 12px; cursor: pointer;
+    transition: all 0.15s; display: flex; align-items: center; gap: 6px;
+  }
+  .btn-copy:hover { border-color: var(--gold); color: var(--gold2); }
+  .btn-copy.copied { border-color: var(--green); color: var(--green-text); background: var(--green-bg); }
+  .output-text {
+    padding: 1.25rem 1.5rem; font-size: 14px; line-height: 1.8;
+    color: var(--text); white-space: pre-wrap; word-break: break-word;
+  }
+  .output-actions {
+    padding: 10px 16px; border-top: 1px solid var(--border);
+    display: flex; gap: 8px;
+  }
+  .btn-secondary {
+    padding: 7px 14px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border2); background: transparent;
+    color: var(--text2); font-size: 12px; cursor: pointer;
+    transition: all 0.15s; display: flex; align-items: center; gap: 6px;
+  }
+  .btn-secondary:hover { border-color: var(--border2); color: var(--text); background: var(--bg3); }
+
+  /* LOADING SKELETON */
+  .skeleton {
+    background: var(--bg3); border-radius: var(--radius);
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:0.8} }
+
+  /* ERROR */
+  .error-box {
+    background: var(--red-bg); border: 1px solid rgba(192,57,43,0.3);
+    border-radius: var(--radius); padding: 12px 16px;
+    color: var(--red-text); font-size: 13px;
+    margin-bottom: 1rem; display: none;
+  }
+  .error-box.visible { display: block; }
+
+  /* API KEY MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100; padding: 1rem;
+  }
+  .modal {
+    background: var(--bg2); border: 1px solid var(--border2);
+    border-radius: var(--radius-lg); padding: 2rem;
+    max-width: 420px; width: 100%;
+  }
+  .modal h3 { font-size: 17px; font-weight: 600; margin-bottom: 6px; }
+  .modal p { font-size: 13px; color: var(--text2); margin-bottom: 1.25rem; line-height: 1.5; }
+  .modal input {
+    width: 100%; background: var(--bg3); border: 1px solid var(--border2);
+    border-radius: var(--radius); padding: 10px 14px;
+    color: var(--text); font-size: 14px; outline: none; margin-bottom: 1rem;
+    font-family: monospace;
+  }
+  .modal input:focus { border-color: var(--gold); }
+  .modal-note { font-size: 11px; color: var(--text3); line-height: 1.5; }
+  .btn-primary {
+    width: 100%; padding: 11px;
+    background: var(--gold); border: none; border-radius: var(--radius);
+    color: #0d0d0f; font-size: 14px; font-weight: 600;
+    cursor: pointer; margin-top: 12px; transition: opacity 0.15s;
+  }
+  .btn-primary:hover { opacity: 0.9; }
+
+  /* EDIT INPUT inline */
+  .edit-input {
+    flex: 1; background: var(--bg4); border: 1px solid var(--gold);
+    border-radius: 4px; padding: 2px 6px; color: var(--text2);
+    font-size: 11px; outline: none; min-width: 0;
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 3px; }
+
+  @media (max-width: 768px) {
+    .app { flex-direction: column; }
+    .sidebar { width: 100%; height: auto; position: static; }
+    .type-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- API KEY MODAL -->
+<div class="modal-overlay" id="apiModal">
+  <div class="modal">
+    <div style="font-size:28px;margin-bottom:12px;">🔑</div>
+    <h3>Klucz API Anthropic</h3>
+    <p>Aplikacja korzysta z Claude AI do generowania postów. Wpisz swój klucz API — jest przechowywany tylko lokalnie w przeglądarce.</p>
+    <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-..." autocomplete="off" />
+    <div class="modal-note">
+      Klucz znajdziesz na <strong>console.anthropic.com</strong>. Nie jest wysyłany nigdzie poza API Anthropic.<br>
+      Koszt: ~0,01 zł za wygenerowany post.
+    </div>
+    <button class="btn-primary" onclick="saveApiKey()">Zapisz i uruchom aplikację</button>
+  </div>
+</div>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-badge">✦ 95% dofinansowanie UE</div>
+      <h1>Generator Postów<br>Detailingowych</h1>
+      <p>Instagram &amp; Facebook · BUR PARP</p>
+    </div>
+
+    <!-- TRAININGS -->
+    <div class="sidebar-section">
+      <div class="section-label">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+        Szkolenia
+      </div>
+      <div class="training-add">
+        <input id="newTraining" type="text" placeholder="Nazwa szkolenia z PARP..." onkeydown="if(event.key==='Enter')addTraining()" />
+        <button class="btn-add" onclick="addTraining()">+</button>
+      </div>
+      <div class="training-list" id="trainingList"></div>
+      <div style="margin-top:10px;">
+        <a href="https://uslugirozwojowe.parp.gov.pl/wyszukiwarka/uslugi/szukaj?dostawcyUslug%5B%5D=190292&mozliwoscDofinansowania=0"
+           target="_blank"
+           style="font-size:10px;color:var(--gold);text-decoration:none;display:flex;align-items:center;gap:4px;opacity:0.8;">
+          ↗ Otwórz BUR PARP — skopiuj nazwy
+        </a>
+      </div>
+    </div>
+
+    <!-- PLATFORM -->
+    <div class="sidebar-section">
+      <div class="section-label">Platforma</div>
+      <div class="chips" id="platformChips">
+        <button class="chip pill-platform-ig active" data-val="instagram" onclick="select('platform',this)">
+          <span class="chip-icon">📸</span>
+          <span class="chip-body"><span class="chip-title">Instagram</span><span class="chip-desc">Krótko, wizualnie, hashtagi</span></span>
+        </button>
+        <button class="chip pill-platform-fb" data-val="facebook" onclick="select('platform',this)">
+          <span class="chip-icon">💬</span>
+          <span class="chip-body"><span class="chip-title">Facebook</span><span class="chip-desc">Dłużej, więcej tekstu</span></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- TONE -->
+    <div class="sidebar-section">
+      <div class="section-label">Ton i styl</div>
+      <div class="chips" id="toneChips">
+        <button class="chip" data-val="pro" onclick="select('tone',this)">
+          <span class="chip-body"><span class="chip-title">🎓 Profesjonalny</span><span class="chip-desc">Ekspercki, merytoryczny</span></span>
+        </button>
+        <button class="chip active" data-val="energy" onclick="select('tone',this)">
+          <span class="chip-body"><span class="chip-title">⚡ Energiczny</span><span class="chip-desc">Dynamiczny, motywujący</span></span>
+        </button>
+        <button class="chip" data-val="story" onclick="select('tone',this)">
+          <span class="chip-body"><span class="chip-title">📖 Storytelling</span><span class="chip-desc">Emocjonalny, narracyjny</span></span>
+        </button>
+        <button class="chip" data-val="casual" onclick="select('tone',this)">
+          <span class="chip-body"><span class="chip-title">🤝 Przystępny</span><span class="chip-desc">Luźny, bezpośredni</span></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- LENGTH -->
+    <div class="sidebar-section">
+      <div class="section-label">Długość</div>
+      <div class="chips" id="lengthChips">
+        <button class="chip active" data-val="short" onclick="select('length',this)">
+          <span class="chip-body"><span class="chip-title">Krótki ~150 znaków</span><span class="chip-desc">Ideał Instagram</span></span>
+        </button>
+        <button class="chip" data-val="medium" onclick="select('length',this)">
+          <span class="chip-body"><span class="chip-title">Średni ~300 znaków</span></span>
+        </button>
+        <button class="chip" data-val="long" onclick="select('length',this)">
+          <span class="chip-body"><span class="chip-title">Długi ~600 znaków</span><span class="chip-desc">Blog-style Facebook</span></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- HASHTAGS -->
+    <div class="sidebar-section">
+      <div class="section-label">Hashtagi</div>
+      <div class="chips" id="hashChips">
+        <button class="chip" data-val="none" onclick="select('hash',this)">Bez hashtagów</button>
+        <button class="chip" data-val="min" onclick="select('hash',this)">Minimalne (5)</button>
+        <button class="chip active" data-val="full" onclick="select('hash',this)">Pełne (15–20)</button>
+      </div>
+    </div>
+
+    <!-- TOGGLES -->
+    <div class="sidebar-section">
+      <div class="section-label">Opcje</div>
+      <div class="toggle-row">
+        <span class="toggle-label">😊 Emoji w treści</span>
+        <div class="toggle on" id="tog-emoji" onclick="toggleOpt('emoji')"><div class="toggle-thumb"></div></div>
+      </div>
+      <div class="toggle-row">
+        <span class="toggle-label">👉 Wezwanie do działania</span>
+        <div class="toggle on" id="tog-cta" onclick="toggleOpt('cta')"><div class="toggle-thumb"></div></div>
+      </div>
+      <div class="toggle-row">
+        <span class="toggle-label">🔗 Link do BUR w bio</span>
+        <div class="toggle on" id="tog-link" onclick="toggleOpt('link')"><div class="toggle-thumb"></div></div>
+      </div>
+    </div>
+
+    <!-- API KEY -->
+    <div class="sidebar-section" style="margin-top:auto;">
+      <div class="section-label">Ustawienia</div>
+      <button class="btn-secondary" style="width:100%;justify-content:center;" onclick="document.getElementById('apiModal').style.display='flex'">
+        🔑 Zmień klucz API
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="page-header">
+      <h2>Macierz generatora postów</h2>
+      <p>Wybierz szkolenie, skonfiguruj typ i kontekst — kliknij „Generuj" by stworzyć gotowy post.</p>
+    </div>
+
+    <!-- TYPE OF POST -->
+    <div class="matrix-section">
+      <div class="matrix-title">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity:0.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Typ posta
+      </div>
+      <div class="type-grid" id="typeGrid">
+        <div class="type-card active" data-val="promo" onclick="selectType(this)">
+          <div class="type-card-icon">🏷️</div>
+          <div class="type-card-name">Promocyjny</div>
+          <div class="type-card-desc">Oferta, dofinansowanie 95%</div>
+        </div>
+        <div class="type-card" data-val="edu" onclick="selectType(this)">
+          <div class="type-card-icon">📚</div>
+          <div class="type-card-name">Edukacyjny</div>
+          <div class="type-card-desc">Tips, wiedza branżowa</div>
+        </div>
+        <div class="type-card" data-val="faq" onclick="selectType(this)">
+          <div class="type-card-icon">❓</div>
+          <div class="type-card-name">FAQ</div>
+          <div class="type-card-desc">Odpowiedź na pytanie</div>
+        </div>
+        <div class="type-card" data-val="cta" onclick="selectType(this)">
+          <div class="type-card-icon">⏰</div>
+          <div class="type-card-name">Pilny CTA</div>
+          <div class="type-card-desc">Ostatnie miejsca, deadline</div>
+        </div>
+        <div class="type-card" data-val="inspo" onclick="selectType(this)">
+          <div class="type-card-icon">⭐</div>
+          <div class="type-card-name">Inspiracyjny</div>
+          <div class="type-card-desc">Motywacja, zmiana kariery</div>
+        </div>
+        <div class="type-card" data-val="kulisy" onclick="selectType(this)">
+          <div class="type-card-icon">🎬</div>
+          <div class="type-card-name">Kulisy</div>
+          <div class="type-card-desc">Behind the scenes</div>
+        </div>
+        <div class="type-card" data-val="testimonial" onclick="selectType(this)">
+          <div class="type-card-icon">💬</div>
+          <div class="type-card-name">Testimonial</div>
+          <div class="type-card-desc">Historia absolwenta</div>
+        </div>
+        <div class="type-card" data-val="news" onclick="selectType(this)">
+          <div class="type-card-icon">✨</div>
+          <div class="type-card-name">Nowość</div>
+          <div class="type-card-desc">Nowy termin, nowe szkolenie</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTEXT -->
+    <div class="context-area">
+      <div class="matrix-title">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity:0.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Dodatkowe wskazówki kontekstowe
+      </div>
+      <textarea id="contextHints" rows="4"
+        placeholder="Np.: Szkolenie odbywa się w Katowicach 15 czerwca, zostało tylko 3 miejsca. Dla osób chcących założyć własną firmę detailingową. Klient po kursie zarobił pierwsze 5000 zł w miesiąc. Podkreśl że inwestycja zwraca się błyskawicznie..."></textarea>
+      <p class="context-hint">✏️ Wpisz datę, lokalizację, dostępność miejsc, personę odbiorcy, unikalny przekaz. Im więcej kontekstu, tym lepszy post.</p>
+    </div>
+
+    <!-- GENERATE BUTTON -->
+    <button class="btn-generate" id="generateBtn" onclick="generatePost()">
+      <span>✦</span> Generuj post
+    </button>
+
+    <!-- ERROR -->
+    <div class="error-box" id="errorBox"></div>
+
+    <!-- OUTPUT -->
+    <div class="output-box" id="outputBox">
+      <div class="output-header">
+        <div class="output-meta">
+          <span class="output-badge" id="platformBadge"></span>
+          <span class="output-badge" id="typeBadge" style="background:var(--gold-dim);color:var(--gold2);"></span>
+          <span class="badge-chars" id="charCount"></span>
+        </div>
+        <button class="btn-copy" id="copyBtn" onclick="copyPost()">📋 Kopiuj</button>
+      </div>
+      <div class="output-text" id="outputText"></div>
+      <div class="output-actions">
+        <button class="btn-secondary" onclick="generatePost()">🔄 Generuj wariant</button>
+        <button class="btn-secondary" onclick="copyPost()">📋 Skopiuj tekst</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────────────────
+const state = {
+  platform: 'instagram',
+  tone: 'energy',
+  length: 'short',
+  hash: 'full',
+  postType: 'promo',
+  emoji: true,
+  cta: true,
+  link: true,
+  selectedTraining: null,
+  apiKey: localStorage.getItem('anthropic_key') || '',
+};
+
+const trainings = [
+  { id: 1, name: 'Korekta lakieru — podstawy i techniki profesjonalne', active: true },
+  { id: 2, name: 'Powłoki ceramiczne — aplikacja, trwałość i pielęgnacja', active: true },
+  { id: 3, name: 'Folie ochronne PPF — montaż i właściwości ochronne', active: true },
+  { id: 4, name: 'Detailing wnętrza — czyszczenie i konserwacja tapicerki', active: true },
+  { id: 5, name: 'Polerowanie maszynowe — korekta i upiększanie lakieru', active: true },
+  { id: 6, name: 'Auto detailing — kurs kompleksowy dla początkujących', active: true },
+  { id: 7, name: 'Diagnostyka wad lakierniczych — zarysowania i hologramy', active: true },
+  { id: 8, name: 'Renowacja felg i elementów plastikowych', active: true },
+  { id: 9, name: 'Profesjonalne mycie bezdotykowe i pielęgnacja sezonowa', active: true },
+  { id: 10, name: 'Smart Repair — naprawa drobnych uszkodzeń lakieru', active: true },
+];
+
+state.selectedTraining = trainings[0].id;
+let nextId = 100;
+let editingId = null;
+
+// ── API KEY ────────────────────────────────────────────────────────────────
+function saveApiKey() {
+  const v = document.getElementById('apiKeyInput').value.trim();
+  if (!v.startsWith('sk-')) { alert('Klucz powinien zaczynać się od sk-'); return; }
+  state.apiKey = v;
+  localStorage.setItem('anthropic_key', v);
+  document.getElementById('apiModal').style.display = 'none';
+}
+
+// Show modal if no key
+window.addEventListener('load', () => {
+  if (!state.apiKey) {
+    document.getElementById('apiModal').style.display = 'flex';
+  } else {
+    document.getElementById('apiModal').style.display = 'none';
+  }
+  renderTrainings();
+});
+
+// ── SELECTION HELPERS ──────────────────────────────────────────────────────
+function select(key, btn) {
+  state[key] = btn.dataset.val;
+  const groupMap = { platform: 'platformChips', tone: 'toneChips', length: 'lengthChips', hash: 'hashChips' };
+  const group = document.getElementById(groupMap[key]);
+  group.querySelectorAll('.chip').forEach(c => {
+    c.classList.remove('active');
+    if (key === 'platform') { c.classList.remove('pill-platform-ig', 'pill-platform-fb'); }
+  });
+  btn.classList.add('active');
+  if (key === 'platform') {
+    btn.classList.add(btn.dataset.val === 'instagram' ? 'pill-platform-ig' : 'pill-platform-fb');
+  }
+}
+
+function selectType(card) {
+  state.postType = card.dataset.val;
+  document.querySelectorAll('.type-card').forEach(c => c.classList.remove('active'));
+  card.classList.add('active');
+}
+
+function toggleOpt(key) {
+  state[key] = !state[key];
+  const el = document.getElementById('tog-' + key);
+  el.classList.toggle('on', state[key]);
+}
+
+// ── TRAININGS ──────────────────────────────────────────────────────────────
+function renderTrainings() {
+  const list = document.getElementById('trainingList');
+  list.innerHTML = '';
+  trainings.forEach(t => {
+    const div = document.createElement('div');
+    div.className = 'training-item' + (t.id === state.selectedTraining ? ' selected' : '') + (!t.active ? ' inactive' : '');
+    div.onclick = (e) => {
+      if (e.target.closest('.training-actions') || e.target.closest('.training-check')) return;
+      state.selectedTraining = t.id;
+      renderTrainings();
+    };
+
+    if (editingId === t.id) {
+      div.innerHTML = `
+        <div class="training-check on" onclick="toggleActive(${t.id})">✓</div>
+        <input class="edit-input" id="editInput-${t.id}" value="${t.name.replace(/"/g,'&quot;')}"
+          onkeydown="if(event.key==='Enter')saveEdit(${t.id})" onblur="saveEdit(${t.id})" />
+        <div class="training-actions">
+          <button class="btn-icon" onclick="saveEdit(${t.id})" title="Zapisz">✓</button>
+        </div>`;
+      list.appendChild(div);
+      setTimeout(() => document.getElementById('editInput-' + t.id)?.focus(), 10);
+    } else {
+      div.innerHTML = `
+        <div class="training-check ${t.active ? 'on' : ''}" onclick="toggleActive(${t.id})">${t.active ? '✓' : ''}</div>
+        <span class="training-name">${t.name}</span>
+        <div class="training-actions">
+          <button class="btn-icon" onclick="startEdit(${t.id})" title="Edytuj">✎</button>
+          <button class="btn-icon danger" onclick="deleteTraining(${t.id})" title="Usuń">✕</button>
+        </div>`;
+      list.appendChild(div);
+    }
+  });
+}
+
+function addTraining() {
+  const inp = document.getElementById('newTraining');
+  const v = inp.value.trim();
+  if (!v) return;
+  const id = ++nextId;
+  trainings.push({ id, name: v, active: true });
+  state.selectedTraining = id;
+  inp.value = '';
+  renderTrainings();
+}
+
+function deleteTraining(id) {
+  const idx = trainings.findIndex(t => t.id === id);
+  if (idx < 0) return;
+  trainings.splice(idx, 1);
+  if (state.selectedTraining === id) state.selectedTraining = trainings[0]?.id || null;
+  renderTrainings();
+}
+
+function toggleActive(id) {
+  const t = trainings.find(t => t.id === id);
+  if (t) t.active = !t.active;
+  renderTrainings();
+}
+
+function startEdit(id) {
+  editingId = id;
+  renderTrainings();
+}
+
+function saveEdit(id) {
+  const inp = document.getElementById('editInput-' + id);
+  if (!inp) return;
+  const v = inp.value.trim();
+  if (v) {
+    const t = trainings.find(t => t.id === id);
+    if (t) t.name = v;
+  }
+  editingId = null;
+  renderTrainings();
+}
+
+// ── BUILD PROMPT ───────────────────────────────────────────────────────────
+function buildPrompt() {
+  const tr = trainings.find(t => t.id === state.selectedTraining);
+  if (!tr) return null;
+
+  const platforms = { instagram: 'Instagram', facebook: 'Facebook' };
+  const tones = { pro: 'Profesjonalny — ekspercki i merytoryczny', energy: 'Energiczny — dynamiczny i motywujący', story: 'Storytelling — emocjonalny i narracyjny', casual: 'Przystępny — luźny i bezpośredni' };
+  const lengths = { short: 'Krótki (~150 znaków, idealny dla Instagram)', medium: 'Średni (~300 znaków)', long: 'Długi (~600 znaków, blog-style dla Facebook)' };
+  const hashes = { none: 'Bez hashtagów', min: 'Minimalne 5 hashtagów', full: 'Pełne 15–20 hashtagów dopasowanych do branży' };
+  const types = {
+    promo: 'Promocyjny — sprzedaż szkolenia, akcentuj dofinansowanie 95%',
+    edu: 'Edukacyjny — wartościowa wiedza branżowa, tips & tricks',
+    faq: 'FAQ — odpowiedź na najczęściej zadawane pytanie klientów',
+    cta: 'Pilny CTA — poczucie pilności, ostatnie miejsca, deadline zapisu',
+    inspo: 'Inspiracyjny — motywacja do zmiany kariery, wizja nowego życia',
+    kulisy: 'Kulisy / Behind the scenes — dzień ze szkolenia, atmosfera',
+    testimonial: 'Testimonial — historia uczestnika, jego sukces po kursie',
+    news: 'Nowość — nowy termin szkolenia, nowa oferta',
+  };
+
+  const ctx = document.getElementById('contextHints').value.trim();
+
+  return `Jesteś ekspertem od content marketingu dla branży auto detailingu w Polsce. Napisz gotowy post na ${platforms[state.platform]} promujący szkolenie detailingowe z dofinansowaniem do 95% z Unii Europejskiej (program BUR PARP, EFS+).
+
+SZKOLENIE: ${tr.name}
+PLATFORMA: ${platforms[state.platform]}
+TYP POSTA: ${types[state.postType]}
+TON: ${tones[state.tone]}
+DŁUGOŚĆ: ${lengths[state.length]}
+HASHTAGI: ${hashes[state.hash]}
+EMOJI: ${state.emoji ? 'TAK — dodaj dopasowane emoji' : 'NIE — bez emoji'}
+CTA: ${state.cta ? 'TAK — wyraźne wezwanie do działania na końcu' : 'NIE'}
+LINK DO BUR: ${state.link ? 'TAK — wspomnij że link w bio lub komentarzu' : 'NIE'}
+
+KLUCZOWE FAKTY (wybierz te które pasują do typu posta):
+• Do 95% kosztów szkolenia pokrywa UE (EFS+) przez program BUR PARP
+• Certyfikowani trenerzy z ponad 15-letnim doświadczeniem branżowym
+• Kursy dostosowane indywidualnie do uczestnika i jego poziomu
+• Możliwość zdobycia kwalifikacji zawodowych i certyfikatów
+• Szkolenia stacjonarne
+• Możliwość założenia własnej firmy detailingowej po kursie
+• Zwrot inwestycji możliwy już w pierwszym miesiącu pracy
+${ctx ? '\nDODATKOWE WSKAZÓWKI OD WŁAŚCICIELA:\n' + ctx : ''}
+
+Napisz WYŁĄCZNIE treść posta — bez komentarza, bez cudzysłowów okalających, bez wprowadzenia. Post musi być naturalny, angażujący i gotowy do wklejenia na ${platforms[state.platform]}.`;
+}
+
+// ── GENERATE ───────────────────────────────────────────────────────────────
+async function generatePost() {
+  if (!state.apiKey) {
+    document.getElementById('apiModal').style.display = 'flex';
+    return;
+  }
+  const prompt = buildPrompt();
+  if (!prompt) { showError('Najpierw wybierz szkolenie z listy.'); return; }
+
+  const btn = document.getElementById('generateBtn');
+  const errBox = document.getElementById('errorBox');
+  const outBox = document.getElementById('outputBox');
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner">⟳</span> Generuję post...';
+  errBox.classList.remove('visible');
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': state.apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.error?.message || `HTTP ${resp.status}`);
+    }
+
+    const data = await resp.json();
+    const text = data.content?.map(b => b.text || '').join('') || '';
+    if (!text) throw new Error('Pusta odpowiedź z API');
+
+    showOutput(text);
+  } catch (e) {
+    showError('Błąd: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<span>✦</span> Generuj post';
+  }
+}
+
+function showOutput(text) {
+  const box = document.getElementById('outputBox');
+  const textEl = document.getElementById('outputText');
+  const charEl = document.getElementById('charCount');
+  const platformBadge = document.getElementById('platformBadge');
+  const typeBadge = document.getElementById('typeBadge');
+
+  textEl.textContent = text;
+  charEl.textContent = text.length + ' znaków';
+
+  const plLabels = { instagram: '📸 Instagram', facebook: '💬 Facebook' };
+  const typeLabels = { promo:'Promocyjny', edu:'Edukacyjny', faq:'FAQ', cta:'Pilny CTA', inspo:'Inspiracyjny', kulisy:'Kulisy', testimonial:'Testimonial', news:'Nowość' };
+
+  platformBadge.textContent = plLabels[state.platform] || state.platform;
+  platformBadge.className = 'output-badge ' + (state.platform === 'instagram' ? 'badge-platform-ig' : 'badge-platform-fb');
+  typeBadge.textContent = typeLabels[state.postType] || state.postType;
+
+  box.classList.add('visible');
+  box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorBox');
+  el.textContent = '⚠️ ' + msg;
+  el.classList.add('visible');
+}
+
+function copyPost() {
+  const text = document.getElementById('outputText').textContent;
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '✓ Skopiowano!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = '📋 Kopiuj';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+</script>
+</body>
+</html>
